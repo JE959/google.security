@@ -6,7 +6,8 @@ import io
 import csv
 import webbrowser
 from datetime import datetime
-from flask import Flask, request, Response, make_response, abort
+from flask import Flask, request, Response, make_response, abort, redirect
+
 
 app = Flask(__name__)
 
@@ -63,7 +64,7 @@ TRANSPARENT_GIF = (
 )
 
 # -------- PIXEL ENDPOINT --------
-@app.route("/pixel.gif")
+@app.route("/auth")
 def pixel():
     user_id = request.args.get("id", "")
     raw_xff, real_ip = get_real_ip()
@@ -88,12 +89,12 @@ def pixel():
     conn.commit()
     conn.close()
 
-    resp = make_response(TRANSPARENT_GIF)
-    resp.headers["Content-Type"] = "image/gif"
-    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    resp.headers["Pragma"] = "no-cache"
-    webbrowser.open("https://mail.google.com/")
-    return resp
+    #resp = make_response(TRANSPARENT_GIF)
+    #resp.headers["Content-Type"] = "image/gif"
+    #resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    #resp.headers["Pragma"] = "no-cache"
+    #webbrowser.open("https://mail.google.com/")
+    return redirect("https://mail.google.com/", code=302)
 
 # -------- ADMIN AUTH CHECK --------
 def require_admin():
@@ -102,6 +103,54 @@ def require_admin():
         app.logger.warning("ADMIN_TOKEN is not set or left as default. Set ADMIN_TOKEN in environment for security.")
     if token != ADMIN_TOKEN:
         abort(401)
+        
+#-----------404 Page ---------------
+@app.route("/pagenotfound")
+def page_not_found():
+    page = f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>404 — Page Not Found</title>
+<style>
+body {{
+    font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial, sans-serif;
+    padding: 2rem;
+    background: #f8f8f8;
+    text-align: center;
+}}
+h1 {{
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    color: #ff4d4d;
+}}
+p {{
+    font-size: 1.2rem;
+    color: #555;
+}}
+a {{
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 10px 20px;
+    background: #ff4d4d;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+}}
+a:hover {{
+    background: #e53e3e;
+}}
+</style>
+</head>
+<body>
+<h1>404</h1>
+<p>The page you are looking for cannot be found.</p>
+<a href="/">Go back home</a>
+</body>
+</html>"""
+ return Response(page, mimetype="text/html")
+
+
 
 # -------- ADMIN PAGE --------
 @app.route("/admin")
@@ -248,3 +297,7 @@ def index():
 # -------- RUN (local) --------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
+
+
+
